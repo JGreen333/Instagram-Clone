@@ -12,8 +12,10 @@ import {
   onAuthStateChanged,
   signOut,
   updateProfile,
+  signInWithEmailAndPassword,
 } from "firebase/auth";
 
+// Styling for Modal
 const style = {
   position: "absolute",
   top: "50%",
@@ -26,6 +28,7 @@ const style = {
   p: 4,
 };
 
+// CREATING THE APP
 function App() {
   const [posts, setPosts] = useState([]);
   const [open, setOpen] = useState(false);
@@ -33,10 +36,12 @@ function App() {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [user, setUser] = useState(null);
+  const [openSignIn, setOpenSignIn] = useState(false);
 
-  //useEffect
+  //useEffect HOOKS
 
   useEffect(() => {
+    // Keeps Track of User Signed In Status with user and username
     const unsubscribe = onAuthStateChanged(auth, (authUser) => {
       if (authUser) {
         //user has logged in
@@ -55,7 +60,7 @@ function App() {
   }, [user, username]);
 
   useEffect(() => {
-    //this is where the code runs
+    // Gets Post data from Firebase and maps it into posts variable
     onSnapshot(collection(db, "posts"), (snapshot) => {
       setPosts(
         snapshot.docs.map((doc) => ({
@@ -67,6 +72,7 @@ function App() {
   }, []);
 
   const signUp = (event) => {
+    // Creates a new user using email, password and username, catches errors (if any) and closes signup modal
     event.preventDefault();
 
     createUserWithEmailAndPassword(auth, email, password)
@@ -76,10 +82,24 @@ function App() {
         });
       })
       .catch((error) => alert(error.message));
+
+    setOpen(false);
+  };
+
+  const signIn = (event) => {
+    // Sign In feature for existing users and closes sign in modal
+    event.preventDefault();
+
+    signInWithEmailAndPassword(auth, email, password).catch((error) =>
+      alert(error.message)
+    );
+
+    setOpenSignIn(false);
   };
 
   return (
     <div className="app">
+      {/* Sign Up Modal */}
       <Modal open={open} onClose={() => setOpen(false)}>
         <form action="">
           <Box sx={{ ...style, width: 200 }}>
@@ -118,6 +138,42 @@ function App() {
         </form>
       </Modal>
 
+      {/* Sign In Modal */}
+
+      <Modal open={openSignIn} onClose={() => setOpenSignIn(false)}>
+        <form action="">
+          <Box sx={{ ...style, width: 200 }}>
+            <center>
+              <img
+                className="app__headerImage"
+                src="https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png"
+                alt=""
+              />
+
+              <Input
+                placeholder="email"
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              ></Input>
+
+              <Input
+                placeholder="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              ></Input>
+
+              <Button type="submit" onClick={signIn}>
+                Sign In
+              </Button>
+            </center>
+          </Box>
+        </form>
+      </Modal>
+
+      {/* App Header */}
+
       <div className="app__header">
         <img
           className="app__headerImage"
@@ -126,16 +182,22 @@ function App() {
         />
       </div>
 
+      {/* SignIn/Up and Logout Buttons */}
+
       {user ? (
         <Button onClick={() => signOut(auth)}>Logout</Button>
       ) : (
-        <Button onClick={() => setOpen(true)}>Sign Up</Button>
+        <div className="app__loginContainer">
+          <Button onClick={() => setOpenSignIn(true)}>Sign In</Button>
+          <Button onClick={() => setOpen(true)}>Sign Up</Button>
+        </div>
       )}
 
       <h1>
         Hello Clever Programmers Let's Build an Instagram Clone with React!
       </h1>
 
+      {/* Uses data in posts variable to create posts using template from "./Post.js" */}
       {posts.map(({ id, post }) => (
         <Post
           key={id}
