@@ -14,6 +14,7 @@ import {
   updateProfile,
   signInWithEmailAndPassword,
 } from "firebase/auth";
+import ImageUpload from "./ImageUpload";
 
 // Styling for Modal
 const style = {
@@ -99,6 +100,12 @@ function App() {
 
   return (
     <div className="app">
+      {auth.currentUser && auth.currentUser.displayName ? (
+        <ImageUpload username={auth.currentUser.displayName} />
+      ) : (
+        <h3>Signup/Login to upload.</h3>
+      )}
+
       {/* Sign Up Modal */}
       <Modal open={open} onClose={() => setOpen(false)}>
         <form action="">
@@ -137,9 +144,7 @@ function App() {
           </Box>
         </form>
       </Modal>
-
       {/* Sign In Modal */}
-
       <Modal open={openSignIn} onClose={() => setOpenSignIn(false)}>
         <form action="">
           <Box sx={{ ...style, width: 200 }}>
@@ -171,9 +176,7 @@ function App() {
           </Box>
         </form>
       </Modal>
-
       {/* App Header */}
-
       <div className="app__header">
         <img
           className="app__headerImage"
@@ -181,9 +184,7 @@ function App() {
           alt=""
         />
       </div>
-
       {/* SignIn/Up and Logout Buttons */}
-
       {user ? (
         <Button onClick={() => signOut(auth)}>Logout</Button>
       ) : (
@@ -192,11 +193,9 @@ function App() {
           <Button onClick={() => setOpen(true)}>Sign Up</Button>
         </div>
       )}
-
-      <h1>
+      {/* <h1>
         Hello Clever Programmers Let's Build an Instagram Clone with React!
-      </h1>
-
+      </h1> */}
       {/* Uses data in posts variable to create posts using template from "./Post.js" */}
       {posts.map(({ id, post }) => (
         <Post
@@ -206,9 +205,7 @@ function App() {
           imageUrl={post.imageUrl}
         />
       ))}
-
       {/* POST HARDCODED TEMPLATE */}
-
       {/* <Post
         username="jamminjulian"
         caption="Wow! Coding is going great!!!"
