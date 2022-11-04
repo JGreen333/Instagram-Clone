@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import Post from "./Post.js";
 import { db, auth } from "./firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -15,6 +15,7 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import ImageUpload from "./ImageUpload";
+// import InstagramEmbed from "react-instagram-embed";
 
 // Styling for Modal
 const style = {
@@ -62,14 +63,17 @@ function App() {
 
   useEffect(() => {
     // Gets Post data from Firebase and maps it into posts variable
-    onSnapshot(collection(db, "posts"), (snapshot) => {
-      setPosts(
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          post: doc.data(),
-        }))
-      );
-    });
+    onSnapshot(
+      query(collection(db, "posts"), orderBy("timestamp", "desc")),
+      (snapshot) => {
+        setPosts(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            post: doc.data(),
+          }))
+        );
+      }
+    );
   }, []);
 
   const signUp = (event) => {
@@ -100,12 +104,6 @@ function App() {
 
   return (
     <div className="app">
-      {auth.currentUser && auth.currentUser.displayName ? (
-        <ImageUpload username={auth.currentUser.displayName} />
-      ) : (
-        <h3>Signup/Login to upload.</h3>
-      )}
-
       {/* Sign Up Modal */}
       <Modal open={open} onClose={() => setOpen(false)}>
         <form action="">
@@ -176,6 +174,7 @@ function App() {
           </Box>
         </form>
       </Modal>
+
       {/* App Header */}
       <div className="app__header">
         <img
@@ -183,44 +182,54 @@ function App() {
           src="https://www.instagram.com/static/images/web/mobile_nav_type_logo.png/735145cfe0a4.png"
           alt=""
         />
+        {user ? (
+          <Button onClick={() => signOut(auth)}>Logout</Button>
+        ) : (
+          <div className="app__loginContainer">
+            <Button onClick={() => setOpenSignIn(true)}>Sign In</Button>
+            <Button onClick={() => setOpen(true)}>Sign Up</Button>
+          </div>
+        )}
       </div>
-      {/* SignIn/Up and Logout Buttons */}
-      {user ? (
-        <Button onClick={() => signOut(auth)}>Logout</Button>
-      ) : (
-        <div className="app__loginContainer">
-          <Button onClick={() => setOpenSignIn(true)}>Sign In</Button>
-          <Button onClick={() => setOpen(true)}>Sign Up</Button>
+
+      <div className="app__posts">
+        <div className="app__postsLeft">
+          {posts.map(({ id, post }) => (
+            <Post
+              key={id}
+              postId={id}
+              user={user}
+              username={post.username}
+              caption={post.caption}
+              imageUrl={post.imageUrl}
+            />
+          ))}
         </div>
-      )}
-      {/* <h1>
-        Hello Clever Programmers Let's Build an Instagram Clone with React!
-      </h1> */}
+        {/* <div className="app__postsRight">
+          <InstagramEmbed
+            url="https://www.instagram.com/p/CipFjvIOEXf/"
+            clientAccessToken="123|456"
+            maxWidth={320}
+            hideCaption={false}
+            containerTagName="div"
+            protocol=""
+            injectScript
+            onLoading={() => {}}
+            onSuccess={() => {}}
+            onAfterRender={() => {}}
+            onFailure={() => {}}
+          />
+        </div> */}
+      </div>
+
       {/* Uses data in posts variable to create posts using template from "./Post.js" */}
-      {posts.map(({ id, post }) => (
-        <Post
-          key={id}
-          username={post.username}
-          caption={post.caption}
-          imageUrl={post.imageUrl}
-        />
-      ))}
-      {/* POST HARDCODED TEMPLATE */}
-      {/* <Post
-        username="jamminjulian"
-        caption="Wow! Coding is going great!!!"
-        imageUrl="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8oHECkDLAQzEXHPX_zgbWxXWL9a4QWox6Xw&usqp=CAU"
-      />
-      <Post
-        username="asertiveanthony"
-        caption="You DID that."
-        imageUrl="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8oHECkDLAQzEXHPX_zgbWxXWL9a4QWox6Xw&usqp=CAU"
-      />
-      <Post
-        username="confusedchristian"
-        caption="Why did we all post the same picture?"
-        imageUrl="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8oHECkDLAQzEXHPX_zgbWxXWL9a4QWox6Xw&usqp=CAU"
-      /> */}
+
+      {/* Only Allow Image Upload IF Signed In */}
+      {auth.currentUser && auth.currentUser.displayName ? (
+        <ImageUpload username={auth.currentUser.displayName} />
+      ) : (
+        <h3>Signup/Login to upload.</h3>
+      )}
     </div>
   );
 }
